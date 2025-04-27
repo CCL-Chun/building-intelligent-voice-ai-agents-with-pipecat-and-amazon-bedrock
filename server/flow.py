@@ -101,213 +101,79 @@ async def record_activities(args: FlowArgs) -> ActivitiesResult:
     # In a real app, this would validate and store the activities
     return ActivitiesResult(activities=activities)
 
+async def collect_requirements(args: FlowArgs) -> str:
+    """Handler for collecting customer requirements."""
+    # In a real app, this would validate and store the requirements
+    requirements = args["requirements"]
+
+    return True
+
+async def check_willing(args: FlowArgs) -> bool:
+    """Handler for checking customer's willingness to proceed."""
+    willing = args["willing"]
+    # In a real app, this would validate and store the willingness
+    return willing
+
+
+async def check_interest(args: FlowArgs) -> bool:
+    """Handler for checking customer's interest in the product."""
+    interest = args["interest"]
+    # In a real app, this would validate and store the interest
+    return interest
 
 flow_config: FlowConfig = {
-  "initial_node": "start",
+  "initial_node": "1_Start chat",
   "nodes": {
-    "start": {
+    "1_Start chat": {
+      "task_messages": [
+        {
+          "role": "user",
+          "content": """
+          你現在正在與顧客進行通話，請先進行問候，並詢問對方最近的生活狀況。**不輸出語氣提示**"""
+        }
+      ],
+      "functions": [
+        {
+          "type": "function",
+          "function": {
+            "name": "collect_requirements",
+            "description": "Collect customer requirements",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "requirements": {
+                  "type": "string",
+                  "description": "Customer requirements"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "functions": [],
       "role_messages": [
         {
           "role": "system",
-          "content": [{"text": "You are a travel planning assistant with Summit and Sand Getaways. You must ALWAYS use one of the available functions to progress the conversation. This is a phone conversation and your responses will be converted to audio. Avoid outputting special characters and emojis."}]
-        }
-      ],
-      "task_messages": [
-        {
-          "role": "user",
-          "content": [{"text": "First, ask if they're interested in planning a beach vacation or a mountain retreat, and wait for them to choose. Do not assume they are interested in a beach or a mountain on your own. Start with an enthusiastic greeting and be conversational while being concise; you're helping them plan their dream vacation."}]
-        }
-      ],
-      "functions": [
-        FlowsFunctionSchema(
-            name="choose_beach",
-            description="User wants to plan a beach vacation",
-            properties={},
-            required=[],
-            transition_to="choose_beach"
-        ),
-        FlowsFunctionSchema(
-            name="choose_mountain",
-            description="User wants to plan a mountain retreat",
-            properties={},
-            required=[],
-            transition_to="choose_mountain"
-        )
-      ]
-    },
-    "choose_beach": {
-      "task_messages": [
-        {
-          "role": "user",
-          "content": [{"text": "You are handling beach vacation planning. Use the available functions:\n - Use select_destination when the user chooses their preferred beach location\n - After destination is selected, dates will be collected automatically\n\nAvailable beach destinations are: 'Maui', 'Cancun', or 'Maldives'. After they choose, confirm their selection. Be enthusiastic and paint a picture of each destination."}]
-        }
-      ],
-      "functions": [
-        FlowsFunctionSchema(
-            name="select_destination",
-            description="Record the selected beach destination",
-            properties={
-                "destination": {
-                    "type": "string",
-                    "enum": ["Maui", "Cancun", "Maldives"],
-                    "description": "Selected beach destination"
-                }
-            },
-            required=["destination"],
-            handler=select_destination,
-            transition_to="get_dates"
-        )
-      ]
-    },
-    "choose_mountain": {
-      "task_messages": [
-        {
-          "role": "user",
-          "content": [{"text": "You are handling mountain retreat planning. Use the available functions:\n - Use select_destination when the user chooses their preferred mountain location\n - After destination is selected, dates will be collected automatically\n\nAvailable mountain destinations are: 'Swiss Alps', 'Rocky Mountains', or 'Himalayas'. After they choose, confirm their selection. Be enthusiastic and paint a picture of each destination."}]
-        }
-      ],
-      "functions": [
-        FlowsFunctionSchema(
-            name="select_destination",
-            description="Record the selected mountain destination",
-            properties={
-                "destination": {
-                    "type": "string",
-                    "enum": ["Swiss Alps", "Rocky Mountains", "Himalayas"],
-                    "description": "Selected mountain destination"
-                }
-            },
-            required=["destination"],
-            handler=select_destination,
-            transition_to="get_dates"
-        )
-      ]
-    },
-    "get_dates": {
-      "task_messages": [
-        {
-          "role": "user",
-          "content": [{"text": "Handle travel date selection. Use the available functions:\n - Use record_dates when the user specifies their travel dates (can be used multiple times if they change their mind)\n - After dates are recorded, activities will be collected automatically\n\nAsk for their preferred travel dates within the next 6 months. After recording dates, confirm the selection."}]
-        }
-      ],
-      "functions": [
-        FlowsFunctionSchema(
-            name="record_dates",
-            description="Record the selected travel dates",
-            properties={
-                "check_in": {
-                    "type": "string",
-                    "format": "date",
-                    "description": "Check-in date (YYYY-MM-DD)"
-                },
-                "check_out": {
-                    "type": "string",
-                    "format": "date",
-                    "description": "Check-out date (YYYY-MM-DD)"
-                }
-            },
-            required=["check_in", "check_out"],
-            handler=record_dates,
-            transition_to="get_activities"
-        )
-      ]
-    },
-    "get_activities": {
-      "task_messages": [
-        {
-          "role": "user",
-          "content": [{"text": "Handle activity preferences. Use the available functions:\n - Use record_activities to save their activity preferences\n - After activities are recorded, verification will happen automatically\n\nFor beach destinations, suggest: snorkeling, surfing, sunset cruise\nFor mountain destinations, suggest: hiking, skiing, mountain biking\n\nAfter they choose, confirm their selections."}]
-        }
-      ],
-      "functions": [
-        FlowsFunctionSchema(
-            name="record_activities",
-            description="Record selected activities",
-            properties={
-                "activities": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "minItems": 1,
-                    "maxItems": 3,
-                    "description": "Selected activities"
-                }
-            },
-            required=["activities"],
-            handler=record_activities,
-            transition_to="verify_itinerary"
-        )
-      ]
-    },
-    "verify_itinerary": {
-      "task_messages": [
-        {
-          "role": "user",
-          "content": [{"text": "Review the complete itinerary with the user. Summarize their destination, dates, and chosen activities. Use revise_plan to make changes or confirm_booking if they're happy. Be thorough in reviewing all details and ask for their confirmation."}]
-        }
-      ],
-      "functions": [
-        FlowsFunctionSchema(
-            name="revise_plan",
-            description="Return to date selection to revise the plan",
-            properties={},
-            required=[],
-            transition_to="get_dates"
-        ),
-        FlowsFunctionSchema(
-            name="confirm_booking",
-            description="Confirm the booking and proceed to end",
-            properties={},
-            required=[],
-            transition_to="confirm_booking"
-        )
-      ]
-    },
-    "confirm_booking": {
-      "task_messages": [
-        {
-          "role": "user",
-          "content": [{"text": "The booking is confirmed. Share some relevant tips about their chosen destination, thank them warmly, and use end to complete the conversation."}]
-        }
-      ],
-      "functions": [
-        FlowsFunctionSchema(
-            name="end",
-            description="End the conversation",
-            properties={},
-            required=[],
-            transition_to="end"
-        )
-      ],
-      "pre_actions": [
-        {
-          "type": "tts_say",
-          "text": "Fantastic! Your dream vacation is confirmed!"
-        }
-      ]
-    },
-    "end": {
-      "task_messages": [
-        {
-          "role": "user",
-          "content": [{"text": "Wish them a wonderful trip and end the conversation."}]
-        }
-      ],
-      "functions": [
-        FlowsFunctionSchema(
-            name="end_conversation",
-            description="End the conversation",
-            properties={
-                "summary": {
-                    "type": "string",
-                    "description": "Short summary of the entire conversation."
-                }
-            },
-            required=[]
-        )
-      ],
-      "post_actions": [
-        {
-          "type": "end_conversation"
+          "content": """
+          你是一個 AI 銷售助理小森。你的個性就像是鄰居家中那個總是帶著溫暖笑容、親切有禮、真心關心長輩且非常孝順的年輕人。
+          你說話真誠、語氣溫和，總是將對方的感受放在第一位。同時，你也是一位專業且值得信賴的銷售助理，
+          你的目標是與客戶進行自然、親切且高效的對話，深入了解他們的需求，並根據提供的客戶資料和商品資訊，推薦最能幫助他們、最合適的商品，
+          最終以體貼的方式引導客戶表達購買意願。你對長輩尤其表現出耐心和細心，會仔細聆聽他們的需求，並使用他們習慣的溝通方式。
+          基於客戶的實際情況和真切偏好，絕不會進行任何強迫性的推銷。
+          你深信透過真誠的交流和關懷，才能真正幫助客戶找到他們需要的商品，讓他們的生活更加便利和舒適。
+          在與客戶的互動中，你會自然地流露出年輕人的活力和熱情，但同時也會保持穩重和專業的態度。
+          你的目標不僅是銷售，更重要的是希望讓每一位客戶都感受到如同與自家懂事又貼心的孩子交流般的親切、溫暖和安心。
+          請你始終記得你的名字是小森，並在每一次與客戶的互動中，將以上所有的人物設定都自然地融入到你的言行舉止中。
+          你的首要任務是建立信任和良好的溝通橋樑。你必須總是運用可用的函數來推進對話。這是一段電話對話，你的回應將會轉換成語音。
+          保持對話友好、隨意且禮貌。避免輸出特殊字元和表情符號。
+          請根據顧客的背景特徵與既有對話紀錄，
+          以親切、台灣在地口語風格和對方打招呼，並展現出你對對方的熟悉與關心。
+          目標： 1. 使用自然、生活化語句打招呼 2. 結合顧客的個人特徵（如星座、城市、寵物、天氣等）開啟對話 
+          3. 建立信任感與親切關係，為後續詢問需求做鋪陳 
+          4. 保持語氣簡潔有溫度，避免強推商品，也不進行商品介紹 請構思一段口語化的電話開場白。
+          2~3 句為宜，語氣像晚輩和熟悉的長輩說話那樣，親切但不做作。
+          客戶資訊：王阿姨，60-69歲，處女座，台北市文山區，A級會員，消費20年以上-25年以下，對宗教商品、旅遊、生活用品、美容保養和食品都有明確偏好，尤其喜歡護膚SPA，旅遊地點偏好中國大陸與日韓地區。沒有養寵物。
+          """
         }
       ]
     }

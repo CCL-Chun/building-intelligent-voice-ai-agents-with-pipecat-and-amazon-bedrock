@@ -11,7 +11,7 @@ from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.services.aws.stt import TranscribeSTTService
 from pipecat.services.aws.tts import PollyTTSService
 from pipecat.services.aws.llm import BedrockLLMService, BedrockLLMContext
-from pipecat.transports.services.daily import DailyParams, DailyTransport
+from pipecat.transports.services.daily import DailyParams, DailyTransport, DailyTranscriptionSettings
 
 from pipecat_flows import FlowManager
 
@@ -46,6 +46,9 @@ async def main(room_url, token):
                     params=VADParams(stop_secs=0.5)
                 ),
                 transcription_enabled=True,
+                transcription_settings=DailyTranscriptionSettings(
+                    language="zh"
+                ),
             ),
         )
 
@@ -63,11 +66,11 @@ async def main(room_url, token):
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
             region=os.getenv("AWS_REGION"),
-            voice_id="Joanna",
+            voice_id="Zhiyu",
             params=PollyTTSService.InputParams(
-                engine="generative",
-                language="en-AU",
-                rate="1.1"
+                engine="standard",
+                language="zh-TW",
+                rate="1.5"
             )
         )
 
